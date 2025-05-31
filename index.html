@@ -2,38 +2,113 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Мой Mini Web App</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Регистрация</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
-      background-color: #f9f9f9;
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .form-container {
+      background: #1e1e1e;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.5);
+      width: 300px;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
     }
     button {
-      padding: 10px 20px;
+      width: 100%;
+      padding: 10px;
+      background: #00bfa6;
+      border: none;
+      color: #fff;
       font-size: 16px;
       border-radius: 8px;
-      border: none;
-      background: #2a9df4;
-      color: white;
       cursor: pointer;
+    }
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .message {
+      margin-top: 16px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <h1>Привет, <span id="username">гость</span>!</h1>
-  <button onclick="alert('Привет из WebApp!')">Нажми меня</button>
+  <div class="form-container">
+    <h2>Регистрация</h2>
+    <form id="register-form">
+      <input type="text" name="name" placeholder="Ваше имя" required />
+      <input type="password" name="pin" placeholder="Придумайте PIN (4 цифры)" maxlength="4" pattern="\\d{4}" required />
+      <input type="password" name="pinConfirm" placeholder="Повторите PIN" maxlength="4" pattern="\\d{4}" required />
+      <button type="submit">Зарегистрироваться</button>
+    </form>
+    <div class="message" id="message"></div>
+  </div>
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // разворачивает Web App на весь экран
+    tg.expand(); // Развернуть WebApp
 
-    // Покажем имя пользователя, если есть
-    if (tg.initDataUnsafe.user) {
-      document.getElementById('username').textContent = tg.initDataUnsafe.user.first_name;
-    }
+    const user = tg.initDataUnsafe?.user;
+    const tgId = user?.id || "Неизвестно";
+    const tgUsername = user?.username || "Без username";
+
+    const form = document.getElementById('register-form');
+    const message = document.getElementById('message');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = form.name.value.trim();
+      const pin = form.pin.value.trim();
+      const pinConfirm = form.pinConfirm.value.trim();
+
+      if (!/^\d{4}$/.test(pin)) {
+        message.textContent = "PIN должен состоять из 4 цифр.";
+        return;
+      }
+
+      if (pin !== pinConfirm) {
+        message.textContent = "PIN-коды не совпадают.";
+        return;
+      }
+
+      // Данные для отправки
+      const registrationData = {
+        name,
+        pin,
+        tg_id: tgId,
+        tg_username: tgUsername
+      };
+
+      // Отправка данных боту
+      tg.sendData(JSON.stringify(registrationData));
+
+      message.innerHTML = `✅ Привет, <strong>${name}</strong>!<br>Регистрация прошла успешно.<br><br>Telegram ID: ${tgId}<br>Username: @${tgUsername}`;
+      form.style.display = "none";
+    });
   </script>
 </body>
 </html>
